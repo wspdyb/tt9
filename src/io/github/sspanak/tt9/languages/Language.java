@@ -102,4 +102,9 @@ public class Language {
 
 		return sequence.toString();
 	}
+
+	@Override
+	public String toString() {
+		return name;
+	}
 }

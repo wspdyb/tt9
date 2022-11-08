@@ -51,11 +51,9 @@ To support a new language one needs to:
     - To simplify the process, you could use Android Studio. It has a built-in icon generator accessible by right-cicking on "drawable" folder -> New -> Image Asset. Then choose "Icon Type": "Notification Icons", "Asset Type": Text, "Trim": No, "Padding": 0%.
 - Find a suitable dictionary and add it to `assets` folder.
 - Create a new language class in `languages/definitions/`. Make sure to set all properties.
-  - `ID` must be the next available number. Currently, the range is limited between 1 and 31, so there can be 31 languages in total.
+  - `ID` must be the next available number.
   - Set `isPunctuationPartOfWords` to `true`, if you need to use the 1-key for typing words, such as: `it's`, `a'tje` or `п'ят`. Otherwise, it would not be possible to type them, nor will they appear as suggestions. `false` is recommended when apostrophes or other punctuation are not part of the words, to allow faster typing.
 - Add the new language to the list in `LanguageCollection.java`. You only need to add it in one place, in the constructor. Please, be nice and maintain the alphabetical order.
-- Add a new entry in `res/values/const.xml`. Make sure the new ID matches the one in the language class.
-- Add new entries in `res/values/arrays.xml`.
 - Add translations in `res/values/strings-your-lang`. The Android Studio translation editor is very handy.
 
 ## Word Lists
