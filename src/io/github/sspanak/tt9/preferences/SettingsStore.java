@@ -2,6 +2,7 @@ package io.github.sspanak.tt9.preferences;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.view.KeyEvent;
 
 import androidx.preference.PreferenceManager;
@@ -203,8 +204,27 @@ public class SettingsStore {
 
 	/************* UI settings *************/
 
-	public boolean getDarkTheme() { return prefs.getBoolean("pref_dark_theme", true); }
-	public void setDarkTheme(boolean yes) { prefsEditor.putBoolean("pref_dark_theme", yes); }
+	public int getTheme() {
+		int theme = android.R.style.Theme_DeviceDefault_Light;
+		try {
+			theme = Integer.parseInt(prefs.getString("pref_theme", ""));
+		} catch (NumberFormatException e) {
+			return theme;
+		}
+
+		return theme;
+	}
+
+	public boolean getDarkTheme() {
+		int theme = getTheme();
+
+		return
+			theme == android.R.style.Theme_DeviceDefault
+			|| theme == android.R.style.Theme_Holo
+			|| (
+				Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && theme == android.R.style.Theme_Material
+			);
+	}
 
 	public boolean getShowSoftKeys() { return prefs.getBoolean("pref_show_soft_keys", true); }
 

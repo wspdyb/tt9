@@ -20,13 +20,12 @@
 		app:iconSpaceReserved="false"
 		app:singleLineTitle="true">
 
-		<SwitchPreferenceCompat
-			app:defaultValue="true"
+		<DropDownPreference
 			app:iconSpaceReserved="false"
-			app:key="pref_dark_theme"
-			app:title="@string/pref_dark_theme" />
+			app:key="pref_theme"
+			app:title="@string/pref_theme" />
 
-		<SwitchPreferenceCompat
+		<SwitchPreference
 			app:defaultValue="true"
 			app:iconSpaceReserved="false"
 			app:key="pref_show_soft_keys"

@@ -2,27 +2,18 @@ package io.github.sspanak.tt9.preferences;
 
 import android.os.Bundle;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
+import androidx.fragment.app.FragmentActivity;
 
 import io.github.sspanak.tt9.R;
 import io.github.sspanak.tt9.db.DictionaryLoader;
 import io.github.sspanak.tt9.ui.DictionaryLoadingBar;
 
-public class PreferencesActivity extends AppCompatActivity {
+public class PreferencesActivity extends FragmentActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		setTheme(SettingsStore.getInstance().getTheme());
 		super.onCreate(savedInstanceState);
-
-		setTheme();
 		buildScreen();
-	}
-
-
-	private void setTheme() {
-		AppCompatDelegate.setDefaultNightMode(
-			SettingsStore.getInstance().getDarkTheme() ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
-		);
 	}
 
 

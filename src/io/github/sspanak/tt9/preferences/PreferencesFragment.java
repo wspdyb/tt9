@@ -79,7 +79,9 @@ public class PreferencesFragment extends PreferenceFragmentCompat {
 
 
 	private void createAppearanceSection() {
-		(new ItemToggleDarkTheme(findPreference(ItemToggleDarkTheme.NAME))).enableToggleHandler();
+		(new ItemSelectTheme(findPreference(ItemSelectTheme.NAME), activity, SettingsStore.getInstance()))
+			.populate()
+			.enableChangeHandler();
 	}
 
 

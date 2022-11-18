@@ -14,7 +14,7 @@
 
 	<string name="pref_category_about">О приложении</string>
 	<string name="pref_help">Помощь</string>
-	<string name="pref_dark_theme">Темная тема</string>
+	<string name="dark_theme">Темная</string>
 	<string name="pref_choose_languages">Выбор языков</string>
     <string name="dictionary_truncate_title">Очистить словарь</string>
 
@@ -27,4 +27,5 @@
 	<string name="dictionary_load_title">Загрузить словарь</string>
 	<string name="dictionary_not_found">Ошибка загрузки. Словарь «%1$s» не найден.</string>
 	<string name="dictionary_truncated">Словарь успешно очищен.</string>
+	<string name="pref_theme">Тема</string>
 </resources>

@@ -14,7 +14,7 @@
 
 	<string name="pref_category_about">За приложението</string>
 	<string name="pref_help">Помощ</string>
-	<string name="pref_dark_theme">Тъмен облик</string>
+	<string name="dark_theme">Тъмна</string>
 	<string name="pref_choose_languages">Избор на езици</string>
 	<string name="dictionary_truncate_title">Изтрий речник</string>
 
@@ -41,5 +41,6 @@
 	<string name="function_reset_keys_title">Възстанови стандартните бутони</string>
 	<string name="function_reset_keys_done">Възстановени са стандартните \"бързи\" бутони.</string>
 	<string name="key_hold_key">(задръж)</string>
+	<string name="pref_theme">Тема</string>
 
 </resources>

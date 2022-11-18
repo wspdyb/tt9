@@ -12,7 +12,7 @@
 	<string name="add_word_title">Woord toevoegen</string>
 	<string name="pref_category_about">Over de applicatie</string>
 	<string name="pref_help">Helpen</string>
-	<string name="pref_dark_theme">Donker thema</string>
+	<string name="dark_theme">Donker</string>
 	<string name="pref_choose_languages">Talen kiezen</string>
     <string name="dictionary_truncate_title">Woordenboek wissen</string>
 	<string name="pref_category_dictionaries">Woordenboeken</string>
@@ -20,4 +20,5 @@
 	<string name="dictionary_load_title">Woordenboek laden</string>
 	<string name="dictionary_not_found">Laden mislukt. Woordenboek voor %1$s niet gevonden.</string>
 	<string name="dictionary_truncated">Woordenboek succesvol gewist.</string>
+	<string name="pref_theme">Thema</string>
 </resources>

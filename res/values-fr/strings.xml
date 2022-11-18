@@ -14,7 +14,7 @@
 
 	<string name="pref_category_about">À propos de l\'application</string>
 	<string name="pref_help">Aide</string>
-	<string name="pref_dark_theme">Thème sombre</string>
+	<string name="dark_theme">Sombre</string>
 	<string name="pref_choose_languages">Choisir langues</string>
 	<string name="dictionary_truncate_title">Supprimer le dictionaire</string>
 
@@ -27,4 +27,5 @@
 	<string name="dictionary_load_title">Charger le dictionnaire</string>
 	<string name="dictionary_not_found">Echec du chargement. Dictionnaire «%1$s» introuvable.</string>
 	<string name="pref_category_function_keys">Raccourcis clavier</string>
+	<string name="pref_theme">Thème</string>
 </resources>
