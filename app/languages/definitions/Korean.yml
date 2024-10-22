@@ -1,7 +1,8 @@
 locale: ko-KR
 dictionaryFile: ko-utf8.csv
+isSyllabary: yes
 hasUpperCase: no
-layout: # only used to label the virtual keys
+layout: # only used for the virtual key lables
   - [ㅇ,ㅁ,SPECIAL] # 0
   - [ㅣ,PUNCTUATION] # 1
   - [ㆍ] # 2
@@ -13,157 +14,58 @@ layout: # only used to label the virtual keys
   - [ㅅ,ㅎ] # 8
   - [ㅈ,ㅊ] # 9
 sounds:
-  - ########## initial consonants ##########
-    sound: G
-    sequence: 4
-  -
-    sound: K
-    sequence: 44
-  -
-    sound: Kk
-    sequence: 444
-  -
-    sound: N
-    sequence: 5
-  -
-    sound: L # also: "R", but we need a unique identifier, so we use "L"
-    sequence: 55
-  -
-    sound: D
-    sequence: 6
-  -
-    sound: T
-    sequence: 66
-  -
-    sound: Tt
-    sequence: 666
-  -
-    sound: B
-    sequence: 7
-  -
-    sound: P
-    sequence: 77
-  -
-    sound: Pp
-    sequence: 777
-  -
-    sound: S
-    sequence: 8
-  -
-    sound: H
-    sequence: 88
-  -
-    sound: Ss
-    sequence: 888
-  -
-    sound: J
-    sequence: 9
-  -
-    sound: Ch
-    sequence: 99
-  -
-    sound: Jj
-    sequence: 999
-  -
-    sound: Ng
-    sequence: 0
-  -
-    sound: M
-    sequence: 00
-  - ########## vowels ##########
-    sound: I
-    sequence: 1
-  -
-    sound: A
-    sequence: 12
-  -
-    sound: Ae
-    sequence: 121
-  -
-    sound: Ya
-    sequence: 122
-  -
-    sound: Yae
-    sequence: 1221
-  -
-    sound: Eo
-    sequence: 21
-  -
-    sound: E
-    sequence: 211
-  -
-    sound: Yeo
-    sequence: 221
-  -
-    sound: Ye
-    sequence: 2211
-  -
-    sound: Yo
-    sequence: 223
-  -
-    sound: O
-    sequence: 23
-  -
-    sound: Oe
-    sequence: 231
-  -
-    sound: Wa
-    sequence: 2312
-  -
-    sound: Wae
-    sequence: 23121
-  -
-    sound: Eu
-    sequence: 3
-  -
-    sound: Ui
-    sequence: 31
-  -
-    sound: U
-    sequence: 32
-  -
-    sound: Wi
-    sequence: 321
-  -
-    sound: Yu
-    sequence: 322
-  -
-    sound: Wo
-    sequence: 3221
-  -
-    sound: We
-    sequence: 32211
-  - ########## final consonants ##########
-    sound: Gs
-    sequence: 48
-  -
-    sound: Lg
-    sequence: 554
-  -
-    sound: Lb
-    sequence: 557
-  -
-    sound: Ls
-    sequence: 558
-  -
-    sound: Lt
-    sequence: 5566
-  -
-    sound: Lp
-    sequence: 5577
-  -
-    sound: Lh
-    sequence: 5588
-  -
-    sound: Lm
-    sequence: 5500
-  -
-    sound: Nh
-    sequence: 588
-  -
-    sound: Nj
-    sequence: 59
-  -
-    sound: Bs
-    sequence: 78
+  ########## initial consonants ##########
+  - [G,4]
+  - [K,44]
+  - [Gg,444]
+  - [N,5]
+  - [L,55] # also: "R", but we need a unique identifier, so we use "L"
+  - [D,6]
+  - [T,66]
+  - [Tt,666]
+  - [B,7]
+  - [P,77]
+  - [Pp,777]
+  - [S,8]
+  - [H,88]
+  - [Ss,888]
+  - [J,9]
+  - [C,99] # also transcribed as "Ch"
+  - [Jj,999]
+  - [Ng,0]
+  - [M,00]
+  ########## vowels ##########
+  - [I,1]
+  - [A,12]
+  - [Ae,121]
+  - [Ya,122]
+  - [Yae,1221]
+  - [Eo,21]
+  - [E,211]
+  - [Yeo,221]
+  - [Ye,2211]
+  - [Yo,223]
+  - [O,23]
+  - [Oe,231]
+  - [Wa,2312]
+  - [Wae,23121]
+  - [Eu,3]
+  - [Ui,31]
+  - [U,32]
+  - [Wi,321]
+  - [Yu,322]
+  - [Wo,3221]
+  - [We,32211]
+  ########## final consonants ##########
+  - [Gs,48]
+  - [Lg,554]
+  - [Lb,557]
+  - [Ls,558]
+  - [Lt,5566]
+  - [Lp,5577]
+  - [Lh,5588]
+  - [Lm,5500]
+  - [Nh,588]
+  - [Nj,59]
+  - [Bs,78]
 
