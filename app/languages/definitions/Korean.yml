@@ -1,0 +1,169 @@
+locale: ko-KR
+dictionaryFile: ko-utf8.csv
+hasUpperCase: no
+layout: # only used to label the virtual keys
+  - [ㅇ,ㅁ,SPECIAL] # 0
+  - [ㅣ,PUNCTUATION] # 1
+  - [ㆍ] # 2
+  - [ㅡ] # 3
+  - [ㄱ,ㅋ] # 4
+  - [ㄴ,ㄹ] # 5
+  - [ㄷ,ㅌ] # 6
+  - [ㅂ,ㅍ] # 7
+  - [ㅅ,ㅎ] # 8
+  - [ㅈ,ㅊ] # 9
+sounds:
+  - ########## initial consonants ##########
+    sound: G
+    sequence: 4
+  -
+    sound: K
+    sequence: 44
+  -
+    sound: Kk
+    sequence: 444
+  -
+    sound: N
+    sequence: 5
+  -
+    sound: L # also: "R", but we need a unique identifier, so we use "L"
+    sequence: 55
+  -
+    sound: D
+    sequence: 6
+  -
+    sound: T
+    sequence: 66
+  -
+    sound: Tt
+    sequence: 666
+  -
+    sound: B
+    sequence: 7
+  -
+    sound: P
+    sequence: 77
+  -
+    sound: Pp
+    sequence: 777
+  -
+    sound: S
+    sequence: 8
+  -
+    sound: H
+    sequence: 88
+  -
+    sound: Ss
+    sequence: 888
+  -
+    sound: J
+    sequence: 9
+  -
+    sound: Ch
+    sequence: 99
+  -
+    sound: Jj
+    sequence: 999
+  -
+    sound: Ng
+    sequence: 0
+  -
+    sound: M
+    sequence: 00
+  - ########## vowels ##########
+    sound: I
+    sequence: 1
+  -
+    sound: A
+    sequence: 12
+  -
+    sound: Ae
+    sequence: 121
+  -
+    sound: Ya
+    sequence: 122
+  -
+    sound: Yae
+    sequence: 1221
+  -
+    sound: Eo
+    sequence: 21
+  -
+    sound: E
+    sequence: 211
+  -
+    sound: Yeo
+    sequence: 221
+  -
+    sound: Ye
+    sequence: 2211
+  -
+    sound: Yo
+    sequence: 223
+  -
+    sound: O
+    sequence: 23
+  -
+    sound: Oe
+    sequence: 231
+  -
+    sound: Wa
+    sequence: 2312
+  -
+    sound: Wae
+    sequence: 23121
+  -
+    sound: Eu
+    sequence: 3
+  -
+    sound: Ui
+    sequence: 31
+  -
+    sound: U
+    sequence: 32
+  -
+    sound: Wi
+    sequence: 321
+  -
+    sound: Yu
+    sequence: 322
+  -
+    sound: Wo
+    sequence: 3221
+  -
+    sound: We
+    sequence: 32211
+  - ########## final consonants ##########
+    sound: Gs
+    sequence: 48
+  -
+    sound: Lg
+    sequence: 554
+  -
+    sound: Lb
+    sequence: 557
+  -
+    sound: Ls
+    sequence: 558
+  -
+    sound: Lt
+    sequence: 5566
+  -
+    sound: Lp
+    sequence: 5577
+  -
+    sound: Lh
+    sequence: 5588
+  -
+    sound: Lm
+    sequence: 5500
+  -
+    sound: Nh
+    sequence: 588
+  -
+    sound: Nj
+    sequence: 59
+  -
+    sound: Bs
+    sequence: 78
+
