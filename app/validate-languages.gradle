@@ -37,103 +37,6 @@ static def validateDictionaryLine(String line, int lineNumber) {
 }
 
 
-static def extractAlphabetCharsFromLine(String line) {
-	if (line.contains('PUNCTUATION') || line.contains('SPECIAL') || !line.matches('\\s+- \\[.+?\\].*')) {
-		return ''
-	}
-
-	return line.replaceFirst('^\\s+- \\[', '').replaceFirst('\\].*', '').replace(',', '').replace(' ', '')
-}
-
-
-static def parseLanguageFile(File languageFile, String dictionariesDir) {
-	String alphabet = ""
-	File dictionaryFile
-	int errorCount = 0
-	String errorMsg = ""
-
-	boolean hasLayout = false
-	boolean isLocaleValid = false
-	String localeString = ""
-	String dictionaryFileName = ""
-
-	alphabet = languageFile.name.contains("Catalan") ? '·' : alphabet
-	alphabet = languageFile.name.contains("Hebrew") || languageFile.name.contains("Yiddish") ? '"' : alphabet
-
-	for (String line : languageFile.readLines()) {
-		if (
-			line.matches("^[a-zA-Z].*")
-			&& !line.startsWith("abcString")
-			&& !line.startsWith("dictionaryFile")
-			&& !line.startsWith("hasSpaceBetweenWords")
-			&& !line.startsWith("hasUpperCase")
-			&& !line.startsWith("layout")
-			&& !line.startsWith("locale")
-			&& !line.startsWith("name")
-		) {
-			def parts = line.split(":")
-			def property = parts.length > 0 ? parts[0] : line
-
-			errorCount++
-			errorMsg += "Language '${languageFile.name}' is invalid. Found unknown property: '${property}'.\n"
-		}
-
-		if (
-			(line.startsWith("hasUpperCase") || line.startsWith("hasSpaceBetweenWords"))
-			&& !line.endsWith("yes") && !line.endsWith("no")
-		) {
-			def property = line.replaceAll(":.*\$", "")
-			def invalidVal = line.replace("hasUpperCase:", "").trim()
-			errorCount++
-			errorMsg += "Language '${languageFile.name}' is invalid. Unrecognized '${property}' value: '${invalidVal}'. Only 'yes' and 'no' are allowed.\n"
-		}
-
-		if (line.startsWith("layout")) {
-			hasLayout = true
-		}
-
-		if (line.startsWith("locale")) {
-			localeString = line.replace("locale:", "").trim()
-			isLocaleValid = line.matches("^locale:\\s*[a-z]{2}(?:-[A-Z]{2})?")
-		}
-
-		if (line.startsWith("dictionaryFile")) {
-			dictionaryFileName = line.replace("dictionaryFile:", "").trim()
-		}
-
-		def lineCharacters = extractAlphabetCharsFromLine(line)
-		alphabet += lineCharacters
-	}
-
-	if (!hasLayout) {
-		errorCount++
-		errorMsg += "Language '${languageFile.name}' is invalid. Missing 'layout' property.\n"
-	}
-
-	if (alphabet.isEmpty()) {
-		errorCount++
-		errorMsg += "Language '${languageFile.name}' is invalid. No language characters found. Make sure 'layout' contains series of characters per each key in the format: ' - [a, b, c]' and so on\n"
-	}
-
-	if (!isLocaleValid) {
-		errorCount++
-		def msg = localeString.isEmpty() ? "Missing 'locale' property." : "Unrecognized locale format: '${localeString}'"
-		errorMsg += "Language '${languageFile.name}' is invalid. ${msg}\n"
-	}
-
-	dictionaryFile = new File("$dictionariesDir/${dictionaryFileName}")
-	if (dictionaryFileName.isEmpty() || !dictionaryFile.exists()) {
-		errorCount++
-		errorMsg += "Could not find dictionary file: '${dictionaryFileName}' in: '${dictionariesDir}'. Make sure 'dictionaryFile' is set correctly in: '${languageFile.name}'.\n"
-	}
-
-	String[] localeParts = localeString.split(("[-_]"))
-	Locale locale = new Locale(localeParts[0], localeParts.length > 1 ? localeParts[1] : "")
-
-	return [alphabet, locale, dictionaryFile, errorCount, errorMsg]
-}
-
-
 static def parseDictionaryFile(String alphabet, Locale locale, File dictionaryFile, int MAX_ERRORS, String CSV_DELIMITER, int MAX_WORD_FREQUENCY) {
 	final GEOGRAPHICAL_NAME = ~"[A-Z]\\w+-[^\\n]+"
 	final VALID_CHARS = alphabet.toUpperCase(locale) == alphabet ? "^[${alphabet}\\-\\.']+\$" : "^[${alphabet}${alphabet.toUpperCase(locale)}\\-\\.']+\$"
@@ -216,7 +119,7 @@ ext.validateLanguageFiles = { definitionsDir, dictionariesDir, validationDir ->
 			return "Too many errors! Skipping: ${languageFile}\n"
 		}
 
-		def (alphabet, locale, dictionaryFile, langFileErrorCount, langFileErrorMsg) = parseLanguageFile(languageFile, dictionariesDir)
+		def (alphabet, sounds, locale, dictionaryFile, langFileErrorCount, langFileErrorMsg) = parseLanguageFile(languageFile, dictionariesDir)
 		errorCount += langFileErrorCount
 		if (!langFileErrorMsg.isEmpty()) {
 			outputFile.text += "${contentHash} INVALID"

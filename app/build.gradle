@@ -24,11 +24,14 @@ tasks.register('copyDefinitions', Copy) {
 	into LANGUAGES_OUTPUT_DIR
 }
 
-tasks.register('copyDictionaries', Copy) {
-	from DICTIONARIES_INPUT_DIR
-	include '**/*.csv'
-	include '**/*.txt'
-	into DICTIONARIES_OUTPUT_DIR
+
+tasks.register('buildDictionaries') {
+	inputs.dir DICTIONARIES_INPUT_DIR
+	outputs.dir DICTIONARIES_OUTPUT_DIR
+
+	doLast {
+		convertDictionaries(DEFINITIONS_INPUT_DIR, DICTIONARIES_INPUT_DIR, DICTIONARIES_OUTPUT_DIR)
+	}
 }
 
 tasks.register('convertHelp') {
@@ -124,7 +127,7 @@ android {
 		].each { taskName ->
 			try {
 				tasks.named(taskName)?.configure {
-					dependsOn(validateLanguages, copyDefinitions, copyDictionaries, writeDictionaryProperties, convertHelp)
+					dependsOn(validateLanguages, copyDefinitions, buildDictionaries, writeDictionaryProperties, convertHelp)
 				}
 			} catch (UnknownTaskException ignored) {}
 		}
