@@ -2,17 +2,17 @@ locale: ko-KR
 dictionaryFile: ko-utf8.csv
 isSyllabary: yes
 hasUpperCase: no
-layout: # only used for the virtual key lables
+layout: # only used for the virtual key labels
   - [ㅇ,ㅁ,SPECIAL] # 0
   - [ㅣ,PUNCTUATION] # 1
-  - [ㆍ] # 2
+  - [ㆍ,：] # 2
   - [ㅡ] # 3
-  - [ㄱ,ㅋ] # 4
+  - [ㄱ,ㅋ,ㄲ] # 4
   - [ㄴ,ㄹ] # 5
-  - [ㄷ,ㅌ] # 6
-  - [ㅂ,ㅍ] # 7
-  - [ㅅ,ㅎ] # 8
-  - [ㅈ,ㅊ] # 9
+  - [ㄷ,ㅌ,ㄸ] # 6
+  - [ㅂ,ㅍ,ㅃ] # 7
+  - [ㅅ,ㅎ,ㅆ] # 8
+  - [ㅈ,ㅊ,ㅉ] # 9
 sounds:
   ########## initial consonants ##########
   - [G,4]
