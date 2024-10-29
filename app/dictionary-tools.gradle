@@ -18,13 +18,13 @@ ext.convertDictionaries = { definitionsInputDir, dictionariesInputDir, dictionar
 	int errorCount = 0
 
 	def errorStream = fileTree(dir: definitionsInputDir).getFiles().parallelStream().map { definition ->
-		def (alphabet, sounds, hasSyllables, locale, dictionaryFile, langFileErrorCount, langFileErrorMsg) = parseLanguageFile(definition, dictionariesInputDir)
+		def (alphabet, sounds, locale, dictionaryFile, langFileErrorCount, langFileErrorMsg) = parseLanguageFile(definition, dictionariesInputDir)
 		errorCount += langFileErrorCount
 		if (!langFileErrorMsg.isEmpty()) {
 			return langFileErrorMsg
 		}
 
-		def (conversionErrorCount, conversionErrorMessages) = convertDictionary(dictionaryFile, dictionariesOutputDir, alphabet, sounds, hasSyllables, locale, MAX_ERRORS, CSV_DELIMITER, MAX_WORD_FREQUENCY)
+		def (conversionErrorCount, conversionErrorMessages) = convertDictionary(dictionaryFile, dictionariesOutputDir, DICTIONARY_OUTPUT_EXTENSION, alphabet, sounds, locale, MAX_ERRORS, CSV_DELIMITER, MAX_WORD_FREQUENCY, DICTIONARY_COMPRESSION)
 		errorCount += conversionErrorCount
 		if (!conversionErrorMessages.isEmpty()) {
 			return conversionErrorMessages
@@ -40,7 +40,7 @@ ext.convertDictionaries = { definitionsInputDir, dictionariesInputDir, dictionar
 }
 
 
-static def convertDictionary(File dictionaryFile, String dictionariesOutputDir, String alphabet, HashMap<String, String> sounds, boolean hasSyllables, Locale locale, int maxErrors, String csvDelimiter, int maxWordFrequency) {
+static def convertDictionary(File dictionaryFile, String dictionariesOutputDir, String outputDictionaryExtension, String alphabet, HashMap<String, String> sounds, Locale locale, int maxErrors, String csvDelimiter, int maxWordFrequency, boolean isCompressionEnabled) {
 	final int MAX_SORTING_ERRORS = Math.ceil(maxErrors / 10)
 	final VALID_CHARS = alphabet.toUpperCase(locale) == alphabet ? "^[${alphabet}\\-\\.']+\$" : "^[${alphabet}${alphabet.toUpperCase(locale)}\\-\\.']+\$"
 
@@ -60,7 +60,7 @@ static def convertDictionary(File dictionaryFile, String dictionariesOutputDir, 
 			errorMsg += whiteSpaceError
 		}
 
-		def (word, frequency) = getLineData(line, csvDelimiter)
+		def (word, transcription, frequency) = getLineData(line, csvDelimiter)
 
 		String frequencyError = validateFrequency(frequency, maxWordFrequency, dictionaryFile.name, lineNumber)
 		if (frequencyError) {
@@ -68,7 +68,7 @@ static def convertDictionary(File dictionaryFile, String dictionariesOutputDir, 
 			errorMsg += frequencyError
 		}
 
-		def (wordErrorCount, wordErrors) = validateWord(word, lineNumber, VALID_CHARS, "Dictionary '${dictionaryFile.name}' is invalid")
+		def (wordErrorCount, wordErrors) = validateWord(word, VALID_CHARS, sounds.isEmpty(), lineNumber, "Dictionary '${dictionaryFile.name}' is invalid")
 		if (wordErrorCount > 0) {
 			errorCount += wordErrorCount
 			errorMsg += wordErrors
@@ -91,7 +91,8 @@ static def convertDictionary(File dictionaryFile, String dictionariesOutputDir, 
 
 		String digitSequence = ""
 		try {
-			digitSequence = wordToDigitSequence(locale, word, sounds, hasSyllables)
+			def transcribedWord = transcription.isEmpty() ? word : transcription
+			digitSequence = wordToDigitSequence(locale, transcribedWord, sounds, !transcription.isEmpty())
 		} catch (IllegalArgumentException e) {
 			errorCount++
 			errorMsg += "Dictionary '${dictionaryFile.name}' is invalid. Failed generating digit sequence for word '${word}' on line ${lineNumber}. ${e.message}\n"
@@ -105,10 +106,11 @@ static def convertDictionary(File dictionaryFile, String dictionariesOutputDir, 
 		}
 	}
 
-	new File(dictionariesOutputDir, dictionaryFile.name + ".bin").withOutputStream { out ->
+	new File(dictionariesOutputDir, dictionaryFile.name + "." + outputDictionaryExtension).withOutputStream { out ->
 		outputDictionary.each { digitSequence, words ->
-			out.write(compressLine(digitSequence, words))
+			out.write(isCompressionEnabled ? compressLine(digitSequence, words) : convertLine(digitSequence, words))
 		}
+
 	}
 
 	return [errorCount, errorMsg]
@@ -120,21 +122,24 @@ static def convertDictionary(File dictionaryFile, String dictionariesOutputDir, 
 static def getLineData(String line, String delimiter) {
 	String[] parts = line.split(delimiter, 2)
 	String word = parts[0]
+	String transcription = parts.length > 1 && parts[1] =~ "^[a-zA-Z]+\$" ? parts[1] : ""
+
 	int frequency
 	try {
-		frequency = (parts.length > 1 ? parts[1] : "0") as int
+		int partsElement = transcription.isEmpty() ? 1 : 2
+		frequency = (parts.length > partsElement ? parts[partsElement] : "0") as int
 	} catch (Exception ignored) {
 		frequency = -1
 	}
 
-	return [word, frequency]
+	return [word, transcription, frequency]
 }
 
 
-static def wordToDigitSequence(Locale locale, String word, HashMap<String, String> sounds, boolean hasSyllables) {
+static def wordToDigitSequence(Locale locale, String word, HashMap<String, String> sounds, boolean isTranscribed) {
 	String sequence = ""
 
-	final String normalizedWord = hasSyllables ? word : word.toUpperCase(locale)
+	final String normalizedWord = isTranscribed ? word : word.toUpperCase(locale)
 	String currentSound = ""
 
 	for (int i = 0, end = normalizedWord.length() - 1; i <= end; i++) {
@@ -152,7 +157,7 @@ static def wordToDigitSequence(Locale locale, String word, HashMap<String, Strin
 			continue
 		}
 
-		if (!hasSyllables || i == end || Character.isUpperCase(nextChar)) {
+		if (!isTranscribed || i == end || Character.isUpperCase(nextChar)) {
 			if (!sounds.containsKey(currentSound)) {
 				throw new IllegalArgumentException("Sound or layout entry '${currentSound}' does not belong to the language sound list: ${sounds}.")
 			} else {
@@ -191,7 +196,7 @@ static def validateFrequency(int frequency, int maxFrequency, String dictionaryF
 }
 
 
-static def validateWord(String word, int lineNumber, String validCharacters, String errorMsgPrefix) {
+static def validateWord(String word, String validCharacters, boolean isAlphabetLanguage, int lineNumber, String errorMsgPrefix) {
 	int errorCount = 0
 	def errors = ''
 
@@ -205,12 +210,12 @@ static def validateWord(String word, int lineNumber, String validCharacters, Str
 		errors += "${errorMsgPrefix}. Found a garbage word: '${word}' on line ${lineNumber}.\n"
 	}
 
-	if (word.matches("^(.|\\p{L}\\p{M}?)\$")) {
+	if (isAlphabetLanguage && word.matches("^(.|\\p{L}\\p{M}?)\$")) {
 		errorCount++
 		errors += "${errorMsgPrefix}. Found a single letter: '${word}' on line ${lineNumber}. Only uppercase single letters are allowed. The rest of the alphabet will be added automatically.\n"
 	}
 
-	if (errorCount == 0 && !word.matches(validCharacters)) {
+	if (errorCount == 0 && isAlphabetLanguage && !word.matches(validCharacters)) {
 		errorCount++
 		errors += "${errorMsgPrefix}. Word '${word}' on line ${lineNumber} contains characters outside of the defined alphabet: $validCharacters.\n"
 	}
@@ -260,6 +265,7 @@ static byte[] compressLine(String digitSequence, List<String> words) {
 	return buffer.array()
 }
 
+
 static byte[] packDigitSequence(String digits, int length) {
 	ByteBuffer packedBuffer = ByteBuffer.allocate(length)
 
@@ -270,4 +276,9 @@ static byte[] packDigitSequence(String digits, int length) {
 	}
 
 	return packedBuffer.array()
+}
+
+
+static byte[] convertLine(String digitSequence, List<String> words) {
+	return (digitSequence + words.join(" ") + "\n").getBytes(StandardCharsets.UTF_8)
 }

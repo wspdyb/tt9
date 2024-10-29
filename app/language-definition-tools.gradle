@@ -127,7 +127,7 @@ ext.parseLanguageFile = { File languageFile, String dictionariesDir ->
 		}
 	}
 
-	return [alphabet, sounds, hasSounds, locale, dictionaryFile, errorCount, errorMsg]
+	return [alphabet, sounds, locale, dictionaryFile, errorCount, errorMsg]
 }
 
 
