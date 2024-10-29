@@ -21,10 +21,10 @@ sounds:
   - [L,55] # also: "R", but we need a unique identifier, so we use "L"
   - [D,6]
   - [T,66]
-  - [Tt,666]
+  - [Dd,666]
   - [B,7]
   - [P,77]
-  - [Pp,777]
+  - [Bb,777]
   - [S,8]
   - [H,88]
   - [Ss,888]
