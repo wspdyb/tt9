@@ -1,3 +1,5 @@
+apply from: 'dictionary-validation.gradle'
+
 ext.getDictionaryProperties = { dictionariesDir, sizesDir ->
 	fileTree(dir: dictionariesDir).getFiles().parallelStream().forEach {dictionary ->
 		def hash = dictionary.exists() ? dictionary.text.digest("SHA-1") : ""
@@ -37,47 +39,58 @@ ext.convertDictionaries = { definitionsInputDir, dictionariesInputDir, dictionar
 
 
 static def convertDictionary(File dictionaryFile, String alphabet, HashMap<String, String> sounds, Locale locale, int maxErrors, String csvDelimiter, int maxWordFrequency) {
+	final int MAX_SORTING_ERRORS = Math.ceil(maxErrors / 10)
 	final VALID_CHARS = alphabet.toUpperCase(locale) == alphabet ? "^[${alphabet}\\-\\.']+\$" : "^[${alphabet}${alphabet.toUpperCase(locale)}\\-\\.']+\$"
 
 	int errorCount = 0
-	String allErrors = ''
-	List<String> dictionaryContents = dictionaryFile.readLines()
+	String errorMsg = ''
+	Set<String> uniqueWords = new HashSet<>()
 
-	for (int lineNumber = 1, previousWordLength = 0, fileErrors = 0; lineNumber <= dictionaryContents.size() && errorCount < maxErrors; lineNumber++) {
-		String line = dictionaryContents.get(lineNumber - 1)
+	List<String> fileContents = dictionaryFile.readLines()
+	for (int lineNumber = 1, previousWordLength = 0, sortingErrorCount = 0; lineNumber <= fileContents.size() && errorCount < maxErrors; lineNumber++) {
+		String line = fileContents.get(lineNumber - 1)
 
 		String whiteSpaceError = validateNoWhitespace(line, lineNumber)
 		if (whiteSpaceError) {
-			fileErrors++
-			allErrors += whiteSpaceError
+			errorCount++
+			errorMsg += whiteSpaceError
 		}
 
 		def (word, frequency) = getLineData(line, csvDelimiter)
 
 		String frequencyError = validateFrequency(frequency, maxWordFrequency, dictionaryFile.name, lineNumber)
 		if (frequencyError) {
-			fileErrors++
-			allErrors += frequencyError
+			errorCount++
+			errorMsg += frequencyError
 		}
 
 		def (wordErrorCount, wordErrors) = validateWord(word, lineNumber, VALID_CHARS, "Dictionary '${dictionaryFile.name}' is invalid")
 		if (wordErrorCount > 0) {
-			fileErrors += wordErrorCount
-			allErrors += wordErrors
+			errorCount += wordErrorCount
+			errorMsg += wordErrors
 		}
 
-		// @todo: validate no repeating words
-		// @todo: validate words are sorted
-
-		if (fileErrors > 0) {
-			errorCount += fileErrors
+		if (uniqueWords.contains(word)) {
+			errorCount++
+			errorMsg += "Dictionary '${dictionaryFile.name}' is invalid. Found duplicate word: '${word}' on line ${lineNumber}. Remove all duplicates.\n"
 		} else {
+			uniqueWords.add(word)
+		}
+
+		String sortingError = validateWordOrder(word, previousWordLength, errorCount, MAX_SORTING_ERRORS, dictionaryFile.name, lineNumber)
+		if (sortingError) {
+			errorCount++
+			sortingErrorCount++
+			errorMsg += sortingError
+		}
+		previousWordLength = word.length()
+
+		if (errorCount == 0) {
 			// @todo: transform the "word", "frequency" and "sounds" and write them to a new file
 		}
-
 	}
 
-	return [errorCount, allErrors]
+	return [errorCount, errorMsg]
 }
 
 
@@ -140,4 +153,15 @@ static def validateWord(String word, int lineNumber, String validCharacters, Str
 	}
 
 	return [errorCount, errors]
+}
+
+
+static validateWordOrder(String word, int previousWordLength, int sortingErrorCount, int maxSortingErrors, String dictionaryFileName, int lineNumber) {
+	if (word.length() >= previousWordLength || sortingErrorCount > maxSortingErrors) {
+		return ""
+	} else if (sortingErrorCount == maxSortingErrors) {
+		return "Too many sorting errors in '${dictionaryFileName}'. Disabling sorting check until the end of the file.\n"
+	} else {
+		return "Dictionary '${dictionaryFileName}' is not sorted. Word: '${word}' on line ${lineNumber} is shorter than the previous one. Ensure all words are sorted by length and sequence.\n"
+	}
 }

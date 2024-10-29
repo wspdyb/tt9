@@ -6,18 +6,8 @@ apply from: 'constants.gradle'
 apply from: 'dictionary-tools.gradle'
 apply from: 'help-tools.gradle'
 apply from: 'language-definition-tools.gradle'
-apply from: 'validate-languages.gradle'
 apply from: 'version-tools.gradle'
 
-
-tasks.register('validateLanguages') {
-	inputs.dir LANGUAGES_INPUT_DIR
-	outputs.dir LANGUAGE_VALIDATION_DIR
-
-	doLast {
-		validateLanguageFiles(DEFINITIONS_INPUT_DIR, DICTIONARIES_INPUT_DIR, LANGUAGE_VALIDATION_DIR.get().asFile)
-	}
-}
 
 tasks.register('copyDefinitions', Copy) {
 	from LANGUAGES_INPUT_DIR
