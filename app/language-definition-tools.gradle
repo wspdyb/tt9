@@ -1,6 +1,9 @@
 ext.parseLanguageFile = { File languageFile, String dictionariesDir ->
 	String alphabet = ""
+	int layoutKey = 0
 	HashMap<String, String> sounds = new HashMap<>()
+	HashMap<String, String> layoutSounds = new HashMap<>()
+
 	File dictionaryFile
 	int errorCount = 0
 	String errorMsg = ""
@@ -60,9 +63,28 @@ ext.parseLanguageFile = { File languageFile, String dictionariesDir ->
 			dictionaryFileName = line.replace("dictionaryFile:", "").trim()
 		}
 
+		// alphabet string
 		def lineCharacters = extractAlphabetCharsFromLine(line)
 		alphabet += lineCharacters
 
+		// sounds, single letters
+		if (lineCharacters) {
+			lineCharacters.each { letter ->
+				layoutSounds.put(letter, layoutKey.toString())
+			}
+		} else if (line.contains("PUNCTUATION")) {
+			layoutSounds.put("-", layoutKey.toString())
+			layoutSounds.put(".", layoutKey.toString())
+			layoutSounds.put("'", layoutKey.toString())
+			layoutSounds.put('"', layoutKey.toString())
+			layoutSounds.put('·', layoutKey.toString())
+		}
+
+		if (isLayoutLine(line)) {
+			layoutKey++
+		}
+
+		// sounds, syllables
 		def (sound, sequence) = extractSoundFromLine(line)
 		if (!sound.isEmpty() && !sequence.isEmpty()) {
 			sounds.put(sound, sequence)
@@ -99,12 +121,18 @@ ext.parseLanguageFile = { File languageFile, String dictionariesDir ->
 	String[] localeParts = localeString.split(("[-_]"))
 	Locale locale = new Locale(localeParts[0], localeParts.length > 1 ? localeParts[1] : "")
 
-	return [alphabet, sounds, locale, dictionaryFile, errorCount, errorMsg]
+	if (!hasSounds && locale != null) {
+		layoutSounds.forEach { sound, sequence ->
+			sounds.put(sound.toUpperCase(locale), sequence)
+		}
+	}
+
+	return [alphabet, sounds, hasSounds, locale, dictionaryFile, errorCount, errorMsg]
 }
 
 
 static def extractAlphabetCharsFromLine(String line) {
-	if (line.contains('PUNCTUATION') || line.contains('SPECIAL') || !line.matches('\\s+- \\[.+?\\].*') || line.find('\\d+]')) {
+	if (line.contains('PUNCTUATION') || line.contains('SPECIAL') || !isLayoutLine(line)) {
 		return ''
 	}
 
@@ -120,4 +148,9 @@ static def extractSoundFromLine(String line) {
 	def cleanLine = line.replaceFirst('^\\s+- \\[', '').replaceFirst('\\].*', '').replace(' ', '')
 	def parts = cleanLine.split(',')
 	return parts.length > 1 ? [parts[0], parts[1]] : ['', '']
+}
+
+
+static def isLayoutLine(String line) {
+	return line.matches('\\s+- \\[.+?\\].*') && !line.find('\\d+]')
 }

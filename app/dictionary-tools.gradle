@@ -1,4 +1,6 @@
-apply from: 'dictionary-validation.gradle'
+import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
+
 
 ext.getDictionaryProperties = { dictionariesDir, sizesDir ->
 	fileTree(dir: dictionariesDir).getFiles().parallelStream().forEach {dictionary ->
@@ -16,13 +18,13 @@ ext.convertDictionaries = { definitionsInputDir, dictionariesInputDir, dictionar
 	int errorCount = 0
 
 	def errorStream = fileTree(dir: definitionsInputDir).getFiles().parallelStream().map { definition ->
-		def (alphabet, sounds, locale, dictionaryFile, langFileErrorCount, langFileErrorMsg) = parseLanguageFile(definition, dictionariesInputDir)
+		def (alphabet, sounds, hasSyllables, locale, dictionaryFile, langFileErrorCount, langFileErrorMsg) = parseLanguageFile(definition, dictionariesInputDir)
 		errorCount += langFileErrorCount
 		if (!langFileErrorMsg.isEmpty()) {
 			return langFileErrorMsg
 		}
 
-		def (conversionErrorCount, conversionErrorMessages) = convertDictionary(dictionaryFile, alphabet, sounds, locale, MAX_ERRORS, CSV_DELIMITER, MAX_WORD_FREQUENCY)
+		def (conversionErrorCount, conversionErrorMessages) = convertDictionary(dictionaryFile, dictionariesOutputDir, alphabet, sounds, hasSyllables, locale, MAX_ERRORS, CSV_DELIMITER, MAX_WORD_FREQUENCY)
 		errorCount += conversionErrorCount
 		if (!conversionErrorMessages.isEmpty()) {
 			return conversionErrorMessages
@@ -38,7 +40,7 @@ ext.convertDictionaries = { definitionsInputDir, dictionariesInputDir, dictionar
 }
 
 
-static def convertDictionary(File dictionaryFile, String alphabet, HashMap<String, String> sounds, Locale locale, int maxErrors, String csvDelimiter, int maxWordFrequency) {
+static def convertDictionary(File dictionaryFile, String dictionariesOutputDir, String alphabet, HashMap<String, String> sounds, boolean hasSyllables, Locale locale, int maxErrors, String csvDelimiter, int maxWordFrequency) {
 	final int MAX_SORTING_ERRORS = Math.ceil(maxErrors / 10)
 	final VALID_CHARS = alphabet.toUpperCase(locale) == alphabet ? "^[${alphabet}\\-\\.']+\$" : "^[${alphabet}${alphabet.toUpperCase(locale)}\\-\\.']+\$"
 
@@ -47,6 +49,8 @@ static def convertDictionary(File dictionaryFile, String alphabet, HashMap<Strin
 	Set<String> uniqueWords = new HashSet<>()
 
 	List<String> fileContents = dictionaryFile.readLines()
+	LinkedHashMap<String, ArrayList<String>> outputDictionary = new LinkedHashMap<>()
+
 	for (int lineNumber = 1, previousWordLength = 0, sortingErrorCount = 0; lineNumber <= fileContents.size() && errorCount < maxErrors; lineNumber++) {
 		String line = fileContents.get(lineNumber - 1)
 
@@ -85,8 +89,25 @@ static def convertDictionary(File dictionaryFile, String alphabet, HashMap<Strin
 		}
 		previousWordLength = word.length()
 
+		String digitSequence = ""
+		try {
+			digitSequence = wordToDigitSequence(locale, word, sounds, hasSyllables)
+		} catch (IllegalArgumentException e) {
+			errorCount++
+			errorMsg += "Dictionary '${dictionaryFile.name}' is invalid. Failed generating digit sequence for word '${word}' on line ${lineNumber}. ${e.message}\n"
+		}
+
 		if (errorCount == 0) {
-			// @todo: transform the "word", "frequency" and "sounds" and write them to a new file
+			if (!outputDictionary.containsKey(digitSequence)) {
+				outputDictionary.put(digitSequence, new ArrayList<>())
+			}
+			outputDictionary.get(digitSequence).add(word)
+		}
+	}
+
+	new File(dictionariesOutputDir, dictionaryFile.name + ".bin").withOutputStream { out ->
+		outputDictionary.each { digitSequence, words ->
+			out.write(compressLine(digitSequence, words))
 		}
 	}
 
@@ -94,16 +115,7 @@ static def convertDictionary(File dictionaryFile, String alphabet, HashMap<Strin
 }
 
 
-static def validateNoWhitespace(String line, int lineNumber) {
-	if (line == "") {
-		return "There is no word on line ${lineNumber}. Remove all empty lines.\n"
-	} else if (line.contains(" ")) {
-		return "Found space on line ${lineNumber}. Make sure each word is on a new line. Phrases are not allowed.\n"
-	}
-
-	return ''
-}
-
+//////////////////// PARSING ////////////////////
 
 static def getLineData(String line, String delimiter) {
 	String[] parts = line.split(delimiter, 2)
@@ -116,6 +128,57 @@ static def getLineData(String line, String delimiter) {
 	}
 
 	return [word, frequency]
+}
+
+
+static def wordToDigitSequence(Locale locale, String word, HashMap<String, String> sounds, boolean hasSyllables) {
+	String sequence = ""
+
+	final String normalizedWord = hasSyllables ? word : word.toUpperCase(locale)
+	String currentSound = ""
+
+	for (int i = 0, end = normalizedWord.length() - 1; i <= end; i++) {
+		char currentChar = normalizedWord.charAt(i)
+		char nextChar = i < end ? normalizedWord.charAt(i + 1) : 0
+		int nextCharType = Character.getType(nextChar)
+
+		currentSound += currentChar
+
+		// charAt(i) returns "ΐ" as three separate characters, but they must be treated as one.
+		if (
+			locale.getLanguage() == "el"
+			&& (nextCharType == Character.NON_SPACING_MARK || nextCharType == Character.ENCLOSING_MARK || nextCharType == Character.COMBINING_SPACING_MARK)
+		) {
+			continue
+		}
+
+		if (!hasSyllables || i == end || Character.isUpperCase(nextChar)) {
+			if (!sounds.containsKey(currentSound)) {
+				throw new IllegalArgumentException("Sound or layout entry '${currentSound}' does not belong to the language sound list: ${sounds}.")
+			} else {
+				sequence += sounds.get(currentSound)
+				currentSound = ""
+			}
+		}
+	}
+
+	if (sequence.isEmpty()) {
+		throw new IllegalArgumentException("The word does not contain any valid sounds.")
+	}
+
+	return sequence
+}
+
+//////////////////// VALIDATION ////////////////////
+
+static def validateNoWhitespace(String line, int lineNumber) {
+	if (line == "") {
+		return "There is no word on line ${lineNumber}. Remove all empty lines.\n"
+	} else if (line.contains(" ")) {
+		return "Found space on line ${lineNumber}. Make sure each word is on a new line. Phrases are not allowed.\n"
+	}
+
+	return ''
 }
 
 
@@ -164,4 +227,47 @@ static validateWordOrder(String word, int previousWordLength, int sortingErrorCo
 	} else {
 		return "Dictionary '${dictionaryFileName}' is not sorted. Word: '${word}' on line ${lineNumber} is shorter than the previous one. Ensure all words are sorted by length and sequence.\n"
 	}
+}
+
+//////////////////// COMPRESSION ////////////////////
+
+/**
+ * Compresses a digit sequence and all its corresponding words into a single byte array.
+ * The output format is as follows:
+ * - digit sequence/word length (1 byte)
+ * - digit sequence numbers packed into nibbles (4 bits per digit) = (length / 2) bytes
+ * - concatenated UTF-8 bytes of all words
+ */
+static byte[] compressLine(String digitSequence, List<String> words) {
+	// character count of each word, same as digit sequence length
+	int wordLength = digitSequence.length()
+
+	// Step 1: Create ByteBuffer with capacity to hold all data
+	def digitBytes = (int) Math.ceil((wordLength + 1) / 2)  // Bytes needed to store nibbles (4-bit)
+	def utf8Bytes = words.join('').getBytes(StandardCharsets.UTF_8) // Concatenated UTF-8 bytes
+	def buffer = ByteBuffer.allocate(1 + digitBytes + utf8Bytes.length)
+
+	// Step 2: Write the length as the first byte
+	buffer.put((byte) wordLength)
+
+	// Step 3: Pack the digit sequence into nibbles (1 digit = 4 bits, 2 digits = 1 byte)
+	def packedDigits = packDigitSequence(digitSequence, digitBytes)
+	buffer.put(packedDigits)
+
+	// Step 4: Concatenate the words
+	buffer.put(utf8Bytes)
+
+	return buffer.array()
+}
+
+static byte[] packDigitSequence(String digits, int length) {
+	ByteBuffer packedBuffer = ByteBuffer.allocate(length)
+
+	for (int i = 0; i < digits.length(); i += 2) {
+		int highNibble = Character.digit(digits[i] as char, 10) << 4
+		int lowNibble = (i + 1 < digits.length()) ? Character.digit(digits[i + 1] as char, 10) : 0
+		packedBuffer.put((byte) (highNibble | lowNibble))
+	}
+
+	return packedBuffer.array()
 }
